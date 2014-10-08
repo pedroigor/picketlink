@@ -124,7 +124,7 @@ public class JPAIdentityStoreLoadUsersJMeterTest {
 
             BasicModel.addToGroup(relationshipManager, user, group);
 
-            for (int i = 0;i < 20;i++) {
+            for (int i = 0;i < 5;i++) {
                 user.setAttribute(new Attribute("Attribute " + user.getLoginName() + i, "Value " + i));
             }
 

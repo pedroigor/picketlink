@@ -161,7 +161,7 @@ public class BasicModel {
             List<Group> result = query.getResultList();
 
             for (Group group : result) {
-                if (group.getPath().equals(groupPath)) {
+                if (group.getPath().equals(groupPath) || group.getPath().endsWith(groupPath)) {
                     return group;
                 }
             }
