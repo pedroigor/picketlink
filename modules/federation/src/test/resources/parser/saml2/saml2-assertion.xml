@@ -18,7 +18,6 @@
       <ds:Reference URI="#ID_ab0392ef-b557-4453-95a8-a7e168da8ac5">
         <ds:Transforms>
           <ds:Transform Algorithm="http://www.w3.org/2000/09/xmlds#enveloped-signature"/>
-          <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
         </ds:Transforms>
         <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmlds#sha1"/>
         <ds:DigestValue>0Y9QM5c5qCShz5UWmbFzBmbuTus=</ds:DigestValue>

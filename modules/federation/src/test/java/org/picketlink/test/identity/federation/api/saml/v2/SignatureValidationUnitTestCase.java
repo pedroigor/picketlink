@@ -48,9 +48,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Signatures related unit test cases
@@ -293,7 +291,7 @@ public class SignatureValidationUnitTestCase {
     @Test
     public void testNovaOrdisSignature() throws Exception {
         SAML2Response response = new SAML2Response();
-        String fileName = "novaordis-saml-response.xml";
+        String fileName = "parser/saml2/saml2-response-adfs-claims.xml";
         ClassLoader tcl = Thread.currentThread().getContextClassLoader();
         InputStream is = tcl.getResourceAsStream(fileName);
         if (is == null)
@@ -306,7 +304,7 @@ public class SignatureValidationUnitTestCase {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
 
         // String id = "ID_0be488d8-7089-4892-8aeb-83594c800706";
-        String id = "f445d62d-5153-429c-bb6c-3ed7af671927";
+        String id = "_334b1e3d-8783-4ea6-b5a9-0dd6317999d2";
 
         // Get the second assertion
         Node assert2 = DocumentUtil.getNodeWithAttribute(doc, "urn:oasis:names:tc:SAML:2.0:assertion", "Assertion", "ID", id);
@@ -319,39 +317,21 @@ public class SignatureValidationUnitTestCase {
 
         // Let us just validate the signature of the assertion
         Document validatingDoc = DocumentUtil.createDocument();
-        Node importedSignedNode = validatingDoc.importNode(signedNode.getOwnerDocument().getFirstChild(), true);
+        Node importedSignedNode = validatingDoc.importNode(signedNode, true);
         validatingDoc.appendChild(importedSignedNode);
 
         // set IDness in validating document
         Element assertionEl = (Element) DocumentUtil.getNodeWithAttribute(validatingDoc,
                 "urn:oasis:names:tc:SAML:2.0:assertion", "Assertion", "ID", id);
         assertionEl.setIdAttribute("ID", true);
-XMLSignatureUtil.setCanonicalizationMethodType("http://www.w3.org/2001/10/xml-exc-c14n");
+
         // Validate the signature
         boolean isValid = XMLSignatureUtil.validate(validatingDoc, getCertificate().getPublicKey());
         assertTrue("Signature is valid:", isValid);
     }
 
     private X509Certificate getCertificate() throws Exception {
-        String certificateString = "MIIEFTCCAv2gAwIBAgIQDBh8srgJHtVk0Z/+jt9SnzANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UE\n"
-                + "BhMCQkUxHTAbBgNVBAoMFE1hc3RlckNhcmQgV29ybGRXaWRlMSkwJwYDVQQLDCBHbG9iYWwgVGVj\n"
-                + "aG5vbG9neSBhbmQgT3BlcmF0aW9uczEnMCUGA1UEAwweTWFzdGVyQ2FyZCBERVYgR2VuZXJpYyBT\n"
-                + "dWIgQ0ExMB4XDTE0MTAwOTE1NDI0M1oXDTIwMDgyNzA5MDEzOVowgakxCzAJBgNVBAYTAlVTMREw\n"
-                + "DwYDVQQIEwhNaXNzb3VyaTERMA8GA1UEBxMIU3QgTG91aXMxHTAbBgNVBAoTFE1hc3RlcmNhcmQg\n"
-                + "V29ybGR3aWRlMR4wHAYDVQQLExVNUlMgU0FNTCBUZXN0IEhhcm5lc3MxNTAzBgNVBAMTLGVjaC0x\n"
-                + "MC0xNTctMTMyLTMyLmRldi5jb21wdXRlLm1hc3RlcmNhcmQuaW50MIIBIjANBgkqhkiG9w0BAQEF\n"
-                + "AAOCAQ8AMIIBCgKCAQEApuPz7GIGFvnYvlJVe0Xyn3XWTOlIpCNegCfkTIGR3RGRyvcawRXzsseK\n"
-                + "g2cq2InHyiRty8VUvojT7dcz3cR6Vpg/oQ5+I4hTc9KedorONqHrObX46asdlfD7uYxQKD0BsIkM\n"
-                + "WCJor5vv/k+uq6+z39lQY/21355FZbpvsjDHxgud4txInO8mKCwAUQ5VNHtQbvNtdMyObSdzuPQS\n"
-                + "W53PQ7d1hO78pzS2bM1rthdMvGB/YTPwiGPQO90TaH/KQsCXstpxjF+V0nQdCNEpZi7glu6E+459\n"
-                + "UPttjUHF4OvNLgvMyhPErs1VliGfFU79HBiYji4dQ5gOJK6zKACdb4FQTwIDAQABo2AwXjAOBgNV\n"
-                + "HQ8BAf8EBAMCB4AwDAYDVR0TBAUwAwIBADAfBgNVHSMEGDAWgBQZmVS/qv53IdeWurzbV+5nlGN8\n"
-                + "+jAdBgNVHQ4EFgQUkVmphuM2B1x1lum5U36UVR6dDTEwDQYJKoZIhvcNAQEFBQADggEBAGFGViGN\n"
-                + "tcPJfONCUrJ7J+ppLlZjVkYV7gdecdrwfSb++cF/AwSJnXFgp+6UbWHwDsmWz3L1hydNuS2WM51h\n"
-                + "uPedy8JRkaM+JKJz0xhB5EAZNSj24owr9PSLKrd43lH55t/8PY4X/bn04vW2Qjo9MBaDAMcgxelN\n"
-                + "Vj/EMwxlocxVkJpZdesKAO0hmEaEfoG5sinbTqnaPyqPjWh+9b0UgZMhAnAhEUonFe4WaH855j/I\n"
-                + "smf4rKAHomOrp74Ei+qS1njqQwS3GiTqjNAyoSpAY1ni2meBXQMRaCSvYNkn3FJIA7jSIY9TtdZg\n"
-                + "Et4+qPJuxM3x8Ztyoqavf42bDfXbEN4=";
+        String certificateString = "MIIC7jCCAdagAwIBAgIQXp/JPRE5SaJCiQcYG8wqBzANBgkqhkiG9w0BAQsFADAzMTEwLwYDVQQDEyhBREZTIFNpZ25pbmcgLSBDUFMtRVhULUZTLmV4dC5zdy5yaW0ubmV0MB4XDTExMDUwODIyMDQ1OVoXDTEyMDUwNzIyMDQ1OVowMzExMC8GA1UEAxMoQURGUyBTaWduaW5nIC0gQ1BTLUVYVC1GUy5leHQuc3cucmltLm5ldDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANN57C+4eyqeB44BiUB4xmyTcUMhJR55yjnJWWse8KllXJYnFzZzJPvVC1SPlACz2EzuATT5gWFhHyhqolgqAR5a0pke1wXVN4aHKOkUzmDhdd2JfOGFoJRIV9wgkX1bbA2FS+kJMl0ewdgxKdjOlKM+LXNmFteqRYZq2+0ss7vtZJ8/ls9t6cRNd2qI+7zJvPqvs1Beaiia9P45oXn7YPK4TJKIR3aq4vmI1q2cSFK1a1b76YDvzYYAASCpeGJ+20lh3j81/5D408MrjaDb1pMXWhK01okcypQeNwaGoEQwlFm8M5eQCRgnJbHzASE8NMdV+2NW2vn+GNbp327gOk0CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAkYq2FmFTkP9NRXJn/J3XU+9Idv4h76vNdIT4hvfnzhlKGqVZANgIVgXk6aIzSv22x3vxkjSvMDQkhINHLEcKzabWdpAtwUUiqBUykwg+MvzolLkuG6yNT59KrUPbteqxQrhK5O+VCsDIaxjWjvSW0O7ACuPgQFPcnDZDcVXJWOCy6sUmnMSuD1kMmCJ6ubu72IrlnPKWp1obfVl1EV1GOWwx6LSn/WyZ0+ca4bkOLhMku5v+7myQLMWxS5sqb9578ZG51qrfJRde3wCOGAfRBCUa/8H/6xvkp7T6j0Fx4uHj8XBn8wjL8epgWSyH381owGepLRJ+evRIjtbYVEAs7w==";
         X509Certificate cert = null;
         StringBuilder builder = new StringBuilder();
         builder.append("-----BEGIN CERTIFICATE-----\n").append(certificateString).append("\n-----END CERTIFICATE-----");

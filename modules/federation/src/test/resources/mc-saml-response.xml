@@ -15,14 +15,16 @@
                     <ds:Transforms>
                         <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
                         <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
-                            <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="xs"/>
+                            <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="xsi"/>
                         </ds:Transform>
                     </ds:Transforms>
                     <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-                    <ds:DigestValue>cJtghyVWXnzG18f3DnvBQENTQAc=</ds:DigestValue>
+                    <ds:DigestValue>cJtghyVWXnzG18f3DnvBQENTQAc=
+                    </ds:DigestValue>
                 </ds:Reference>
             </ds:SignedInfo>
-            <ds:SignatureValue>QUtVFYNwMafJWYTWfZLppqd/d9v2Q9FR3K+ewyJu8RSWUkyt7STw0g5ukidgmyJ3Vg4mxAu137TcaVwASsxEL+TEtRD0irjkHxWq/xtUwLkO9aUDynge4xxrwWQpNaMe6tzv4309PRxAC0Q5royX5/sskw3zw9YAvj4Nfx8EEDwJgTBPbQNzk9JTg66SveIHiKjzxEzqhYJY+kcxXwp8Yf0ws6l0BLj0oEe5uT2jkmmyBErTfWd95ksXOIGyuyWpuaE5eqnKg2IM7GRbw86ah/nGhSMCiDBV7i3PxXsjEaUNHAbBnuUuV7RDZ8YD8dcMnvQbLxp+Y0vaxYVeDtOKOw==</ds:SignatureValue>
+            <ds:SignatureValue>QUtVFYNwMafJWYTWfZLppqd/d9v2Q9FR3K+ewyJu8RSWUkyt7STw0g5ukidgmyJ3Vg4mxAu137TcaVwASsxEL+TEtRD0irjkHxWq/xtUwLkO9aUDynge4xxrwWQpNaMe6tzv4309PRxAC0Q5royX5/sskw3zw9YAvj4Nfx8EEDwJgTBPbQNzk9JTg66SveIHiKjzxEzqhYJY+kcxXwp8Yf0ws6l0BLj0oEe5uT2jkmmyBErTfWd95ksXOIGyuyWpuaE5eqnKg2IM7GRbw86ah/nGhSMCiDBV7i3PxXsjEaUNHAbBnuUuV7RDZ8YD8dcMnvQbLxp+Y0vaxYVeDtOKOw==
+            </ds:SignatureValue>
             <ds:KeyInfo>
                 <ds:X509Data>
                     <ds:X509Certificate>MIIEFTCCAv2gAwIBAgIQDBh8srgJHtVk0Z/+jt9SnzANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UE

@@ -58,8 +58,7 @@ import static org.junit.Assert.assertTrue;
  * @author <a href="mailto:psilva@redhat.com">Pedro Silva</a>
  * 
  */
-@Configuration(include = {JPAStoreConfigurationTester.class, FileStoreConfigurationTester.class,
-        LDAPStoreConfigurationTester.class, SingleConfigLDAPJPAStoreConfigurationTester.class})
+@Configuration(include = {JPAStoreConfigurationTester.class, FileStoreConfigurationTester.class})
 public class UserManagementTestCase extends AbstractIdentityTypeTestCase<User> {
 
     public UserManagementTestCase(IdentityConfigurationTester builder) {
@@ -94,6 +93,12 @@ public class UserManagementTestCase extends AbstractIdentityTypeTestCase<User> {
         assertNull(storedUser.getExpirationDate());
         assertNotNull(storedUser.getCreatedDate());
         assertTrue(new Date().compareTo(storedUser.getCreatedDate()) >= 0);
+
+        storedUser.setLoginName("teste");
+
+        identityManager.update(storedUser);
+
+        storedUser = getUser("teste");
     }
 
     @Test
