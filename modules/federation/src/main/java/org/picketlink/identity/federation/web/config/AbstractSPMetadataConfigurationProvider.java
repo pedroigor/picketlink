@@ -26,6 +26,7 @@ import org.picketlink.common.exceptions.ConfigurationException;
 import org.picketlink.common.exceptions.ParsingException;
 import org.picketlink.common.exceptions.ProcessingException;
 import org.picketlink.config.federation.IDPType;
+import org.picketlink.config.federation.PicketLinkType;
 import org.picketlink.config.federation.SPType;
 import org.picketlink.identity.federation.core.parsers.saml.SAMLParser;
 import org.picketlink.identity.federation.core.util.CoreConfigUtil;
@@ -54,6 +55,19 @@ public abstract class AbstractSPMetadataConfigurationProvider extends AbstractSA
     @Override
     public IDPType getIDPConfiguration() throws ProcessingException {
         throw new RuntimeException(ErrorCodes.ILLEGAL_METHOD_CALLED);
+    }
+
+    @Override
+    public PicketLinkType getPicketLinkConfiguration() throws ProcessingException {
+        PicketLinkType picketLinkConfiguration = super.getPicketLinkConfiguration();
+
+        if (picketLinkConfiguration == null) {
+            picketLinkConfiguration = new PicketLinkType();
+        }
+
+        picketLinkConfiguration.setIdpOrSP(getSPConfiguration());
+
+        return picketLinkConfiguration;
     }
 
     @Override

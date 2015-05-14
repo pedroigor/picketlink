@@ -107,8 +107,6 @@ import javax.servlet.http.HttpSession;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -128,7 +126,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.picketlink.common.constants.GeneralConstants.AUDIT_HELPER;
-import static org.picketlink.common.constants.GeneralConstants.CONFIG_FILE_LOCATION;
+import static org.picketlink.common.constants.GeneralConstants.CONFIGURATION;
 import static org.picketlink.common.constants.GeneralConstants.CONFIG_PROVIDER;
 import static org.picketlink.common.constants.GeneralConstants.DEPRECATED_CONFIG_FILE_LOCATION;
 import static org.picketlink.common.constants.GeneralConstants.SAML_REQUEST_KEY;
@@ -993,85 +991,68 @@ public class IDPFilter implements Filter {
      * <p>
      * Initializes the IDP configuration.
      * </p>
+     * @param picketLinkConfiguration
      */
     @SuppressWarnings("deprecation")
-    protected void initIDPConfiguration() {
-        InputStream is = null;
+    protected void initIDPConfiguration(PicketLinkType picketLinkConfiguration) {
+        // Clear the configuration
+        PicketLinkType picketLinkType = picketLinkConfiguration;
 
-        if (isNullOrEmpty(this.configFile)) {
-            is = servletContext.getResourceAsStream(CONFIG_FILE_LOCATION);
-        } else {
-            try {
-                is = new FileInputStream(this.configFile);
-            } catch (FileNotFoundException e) {
-                throw logger.samlIDPConfigurationError(e);
-            }
-        }
+        if (picketLinkType == null) {
+            // Work on the IDP Configuration
+            if (configProvider != null) {
+                InputStream is = ConfigurationUtil.getConfigurationInputStream(this.servletContext);
 
-        // Work on the IDP Configuration
-        if (configProvider != null) {
-            try {
-                if (is == null) {
-                    // Try the older version
-                    is = servletContext.getResourceAsStream(DEPRECATED_CONFIG_FILE_LOCATION);
+                try {
+                    if (is == null) {
+                        // Try the older version
+                        is = servletContext.getResourceAsStream(DEPRECATED_CONFIG_FILE_LOCATION);
 
-                    // Additionally parse the deprecated config file
-                    if (is != null && configProvider instanceof AbstractSAMLConfigurationProvider) {
-                        ((AbstractSAMLConfigurationProvider) configProvider).setConfigFile(is);
+                        // Additionally parse the deprecated config file
+                        if (is != null && configProvider instanceof AbstractSAMLConfigurationProvider) {
+                            ((AbstractSAMLConfigurationProvider) configProvider).setConfigFile(is);
+                        }
+                    } else {
+                        // Additionally parse the consolidated config file
+                        if (is != null && configProvider instanceof AbstractSAMLConfigurationProvider) {
+                            ((AbstractSAMLConfigurationProvider) configProvider).setConsolidatedConfigFile(is);
+                        }
                     }
-                } else {
-                    // Additionally parse the consolidated config file
-                    if (is != null && configProvider instanceof AbstractSAMLConfigurationProvider) {
-                        ((AbstractSAMLConfigurationProvider) configProvider).setConsolidatedConfigFile(is);
+
+                    picketLinkType = configProvider.getPicketLinkConfiguration();
+                } catch (ProcessingException e) {
+                    throw logger.samlIDPConfigurationError(e);
+                } catch (ParsingException e) {
+                    throw logger.samlIDPConfigurationError(e);
+                } finally {
+                    try {
+                        is.close();
+                    } catch (IOException ignore) {
                     }
                 }
-
-                picketLinkConfiguration = configProvider.getPicketLinkConfiguration();
-                idpConfiguration = configProvider.getIDPConfiguration();
-            } catch (ProcessingException e) {
-                throw logger.samlIDPConfigurationError(e);
-            } catch (ParsingException e) {
-                throw logger.samlIDPConfigurationError(e);
             }
         }
 
-        if (idpConfiguration == null) {
+        if (picketLinkType == null) {
+            InputStream is = ConfigurationUtil.getConfigurationInputStream(this.servletContext);
+
             if (is != null) {
                 try {
-                    picketLinkConfiguration = ConfigurationUtil.getConfiguration(is);
-                    idpConfiguration = (IDPType) picketLinkConfiguration.getIdpOrSP();
+                    picketLinkType = ConfigurationUtil.getConfiguration(is);
                 } catch (ParsingException e) {
                     logger.trace(e);
                     logger.samlIDPConfigurationError(e);
+                } finally {
+                    try {
+                        is.close();
+                    } catch (IOException ignore) {
+                    }
                 }
-            }
-
-            if (is == null) {
-                // Try the older version
-                is = servletContext.getResourceAsStream(DEPRECATED_CONFIG_FILE_LOCATION);
-                if (is == null)
-                    throw logger.configurationFileMissing(DEPRECATED_CONFIG_FILE_LOCATION);
-                try {
-                    idpConfiguration = ConfigurationUtil.getIDPConfiguration(is);
-                } catch (ParsingException e) {
-                    logger.samlIDPConfigurationError(e);
-                }
-            }
-        }
-
-        //Close the InputStream as we no longer need it
-        if(is != null){
-            try {
-                is.close();
-            } catch (IOException e) {
-                //ignore
             }
         }
 
         try {
-            if (this.picketLinkConfiguration != null) {
-                enableAudit = picketLinkConfiguration.isEnableAudit();
-
+            if (picketLinkType != null) {
                 // See if we have the system property enabled
                 if (!enableAudit) {
                     String sysProp = SecurityActions.getSystemProperty(GeneralConstants.AUDIT_ENABLE, "NULL");
@@ -1088,10 +1069,12 @@ public class IDPFilter implements Filter {
                 }
             }
 
-            logger.trace("Identity Provider URL=" + getIdentityURL());
+            IDPType idpType = (IDPType) picketLinkType.getIdpOrSP();
+
+            logger.trace("Identity Provider URL=" + idpType.getIdentityURL());
 
             // Get the attribute manager
-            String attributeManager = idpConfiguration.getAttributeManager();
+            String attributeManager = idpType.getAttributeManager();
             if (attributeManager != null && !"".equals(attributeManager)) {
                 Class<?> clazz = SecurityActions.loadClass(getClass(), attributeManager);
                 if (clazz == null)
@@ -1105,7 +1088,7 @@ public class IDPFilter implements Filter {
             }
 
             // Get the role generator
-            String roleGeneratorAttribute = idpConfiguration.getRoleGenerator();
+            String roleGeneratorAttribute = idpType.getRoleGenerator();
 
             if (roleGeneratorAttribute != null && !"".equals(roleGeneratorAttribute)) {
                 Class<?> clazz = SecurityActions.loadClass(getClass(), roleGeneratorAttribute);
@@ -1115,7 +1098,7 @@ public class IDPFilter implements Filter {
             }
 
             // Read SP Metadata if provided
-            List<EntityDescriptorType> entityDescriptors = CoreConfigUtil.getMetadataConfiguration(idpConfiguration,
+            List<EntityDescriptorType> entityDescriptors = CoreConfigUtil.getMetadataConfiguration(idpType,
                     servletContext);
             if (entityDescriptors != null) {
                 for (EntityDescriptorType entityDescriptorType : entityDescriptors) {
@@ -1125,6 +1108,9 @@ public class IDPFilter implements Filter {
                     }
                 }
             }
+
+            this.picketLinkConfiguration = picketLinkType;
+            this.idpConfiguration = idpType;
         } catch (Exception e) {
             throw logger.samlIDPConfigurationError(e);
         }
@@ -1185,18 +1171,16 @@ public class IDPFilter implements Filter {
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    // Clear the configuration
-                    picketLinkConfiguration = null;
-                    idpConfiguration = null;
-
-                    initIDPConfiguration();
+                    initIDPConfiguration(null);
                     initKeyManager();
                     initHandlersChain();
                 }
             }, timerInterval, timerInterval);
         }
 
-        initIDPConfiguration();
+        this.picketLinkConfiguration = (PicketLinkType) this.servletContext.getAttribute(CONFIGURATION);
+
+        initIDPConfiguration(this.picketLinkConfiguration);
         initSTSConfiguration();
         initKeyManager();
         initHandlersChain();

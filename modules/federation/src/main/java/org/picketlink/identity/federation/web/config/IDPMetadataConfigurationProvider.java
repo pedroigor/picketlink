@@ -21,6 +21,7 @@ import org.picketlink.common.ErrorCodes;
 import org.picketlink.common.exceptions.ParsingException;
 import org.picketlink.common.exceptions.ProcessingException;
 import org.picketlink.config.federation.IDPType;
+import org.picketlink.config.federation.PicketLinkType;
 import org.picketlink.config.federation.SPType;
 import org.picketlink.config.federation.TrustType;
 import org.picketlink.identity.federation.core.parsers.saml.SAMLParser;
@@ -152,5 +153,18 @@ public class IDPMetadataConfigurationProvider extends AbstractSAMLConfigurationP
 
     public void setIdpMetadataLocation(String idpMetadataLocation) {
         this.idpMetadataLocation = idpMetadataLocation;
+    }
+
+    @Override
+    public PicketLinkType getPicketLinkConfiguration() throws ProcessingException {
+        PicketLinkType picketLinkConfiguration = super.getPicketLinkConfiguration();
+
+        if (picketLinkConfiguration == null) {
+            picketLinkConfiguration = new PicketLinkType();
+        }
+
+        picketLinkConfiguration.setIdpOrSP(getIDPConfiguration());
+
+        return picketLinkConfiguration;
     }
 }

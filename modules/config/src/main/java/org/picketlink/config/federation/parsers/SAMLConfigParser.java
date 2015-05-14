@@ -26,6 +26,7 @@ import org.picketlink.common.parsers.AbstractParser;
 import org.picketlink.common.util.StaxParserUtil;
 import org.picketlink.config.federation.AuthPropertyType;
 import org.picketlink.config.federation.IDPType;
+import org.picketlink.config.federation.IdentityURLProviderType;
 import org.picketlink.config.federation.KeyProviderType;
 import org.picketlink.config.federation.KeyValueType;
 import org.picketlink.config.federation.MetadataProviderType;
@@ -125,6 +126,20 @@ public class SAMLConfigParser extends AbstractParser {
     public static final String SSL_CLIENT_AUTHENTICATION = "SSLClientAuthentication";
 
     public static final String SIGNING_ALIAS = "SigningAlias";
+
+    public static final String PROVIDER = "Provider";
+
+    public static final String DEFAULT_URL = "DefaultURL";
+
+    public static final String DYNAMIC = "Dynamic";
+
+    public static final String DOMAIN = "Domain";
+
+    public static final String PAGE = "Page";
+
+    public static final String TYPE = "Type";
+
+    public static final String EXPIRATION = "Expiration";
 
     public Object parse(XMLEventReader xmlEventReader) throws ParsingException {
         StartElement startElement = StaxParserUtil.peekNextStartElement(xmlEventReader);
@@ -358,7 +373,7 @@ public class SAMLConfigParser extends AbstractParser {
                 break;
             String elementName = StaxParserUtil.getStartElementName(startElement);
             if (elementName.equals(IDENTITY_URL)) {
-                sp.setIdentityURL(StaxParserUtil.getElementText(xmlEventReader));
+                parseIdentityURLProvider(xmlEventReader, startElement, sp);
             } else if (elementName.equals(SERVICE_URL)) {
                 sp.setServiceURL(StaxParserUtil.getElementText(xmlEventReader));
             } else if (elementName.equals(IDP_METADATA_FILE)) {
@@ -374,6 +389,9 @@ public class SAMLConfigParser extends AbstractParser {
             } else if (elementName.equals(KEY_PROVIDER)) {
                 KeyProviderType keyProviderType = parseKeyProvider(xmlEventReader, startElement);
                 sp.setKeyProvider(keyProviderType);
+            } else if (elementName.equals(META_PROVIDER)) {
+                MetadataProviderType mdProviderType = parseMDProvider(xmlEventReader, startElement);
+                sp.setMetaDataProvider(mdProviderType);
             } else if (elementName.equals(META_PROVIDER)) {
                 MetadataProviderType mdProviderType = parseMDProvider(xmlEventReader, startElement);
                 sp.setMetaDataProvider(mdProviderType);
@@ -422,6 +440,66 @@ public class SAMLConfigParser extends AbstractParser {
             }
         }
         return keyProviderType;
+    }
+
+    protected void parseIdentityURLProvider(XMLEventReader xmlEventReader, StartElement startElement, SPType sp)
+            throws ParsingException {
+        while (xmlEventReader.hasNext()) {
+            XMLEvent xmlEvent = StaxParserUtil.peek(xmlEventReader);
+
+            if (xmlEvent == null)
+                break;
+            if (xmlEvent instanceof EndElement) {
+                EndElement endElement = StaxParserUtil.getNextEndElement(xmlEventReader);
+                String endElementName = StaxParserUtil.getEndElementName(endElement);
+                if (endElementName.equals(IDENTITY_URL))
+                    break;
+                else
+                    continue;
+            } else if (xmlEvent.isCharacters())  {
+                sp.setIdentityURL(StaxParserUtil.getElementText(xmlEventReader));
+                break;
+            }
+
+            startElement = StaxParserUtil.getNextStartElement(xmlEventReader);
+            String startElementName = StaxParserUtil.getStartElementName(startElement);
+
+            if (startElementName.equals(PROVIDER)) {
+                IdentityURLProviderType providerType = new IdentityURLProviderType();
+
+                sp.setIdentityURLProvider(providerType);
+
+                Attribute defaultUrlAttribute = startElement.getAttributeByName(new QName("", DEFAULT_URL));
+
+                if (defaultUrlAttribute != null) {
+                    providerType.setDefaultUrl(StaxParserUtil.getAttributeValue(defaultUrlAttribute));
+                }
+
+                Attribute domain = startElement.getAttributeByName(new QName("", DOMAIN));
+
+                if (domain != null) {
+                    providerType.setDomain(StaxParserUtil.getAttributeValue(domain));
+                }
+
+                Attribute page = startElement.getAttributeByName(new QName("", PAGE));
+
+                if (page != null) {
+                    providerType.setPage(StaxParserUtil.getAttributeValue(page));
+                }
+
+                Attribute type = startElement.getAttributeByName(new QName("", TYPE));
+
+                if (type != null) {
+                    providerType.setType(StaxParserUtil.getAttributeValue(type));
+                }
+
+                Attribute expiration = startElement.getAttributeByName(new QName("", EXPIRATION));
+
+                if (expiration != null) {
+                    providerType.setExpiration(Integer.parseInt(StaxParserUtil.getAttributeValue(expiration)));
+                }
+            }
+        }
     }
 
     protected Handler parseHandler(XMLEventReader xmlEventReader, StartElement startElement) throws ParsingException {

@@ -94,7 +94,7 @@ public class IDPFilterConfigurationTestCase {
     public static class CustomAuditHelper extends PicketLinkAuditHelper {
 
         public CustomAuditHelper() throws ConfigurationException {
-            super(null);
+            super("security-domain");
         }
 
         @Override

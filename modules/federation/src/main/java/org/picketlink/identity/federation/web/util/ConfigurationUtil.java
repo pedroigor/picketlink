@@ -19,15 +19,25 @@ package org.picketlink.identity.federation.web.util;
 
 import org.picketlink.common.PicketLinkLogger;
 import org.picketlink.common.PicketLinkLoggerFactory;
+import org.picketlink.common.exceptions.ConfigurationException;
 import org.picketlink.common.exceptions.ParsingException;
+import org.picketlink.common.exceptions.ProcessingException;
 import org.picketlink.config.PicketLinkConfigParser;
 import org.picketlink.config.federation.IDPType;
 import org.picketlink.config.federation.PicketLinkType;
 import org.picketlink.config.federation.SPType;
 import org.picketlink.config.federation.handler.Handlers;
 import org.picketlink.config.federation.parsers.SAMLConfigParser;
+import org.picketlink.identity.federation.core.audit.PicketLinkAuditHelper;
+import org.picketlink.identity.federation.web.config.AbstractSAMLConfigurationProvider;
 
+import javax.servlet.ServletContext;
+import java.io.IOException;
 import java.io.InputStream;
+
+import static org.picketlink.common.constants.GeneralConstants.AUDIT_HELPER;
+import static org.picketlink.common.constants.GeneralConstants.CONFIG_FILE_LOCATION;
+import static org.picketlink.common.constants.GeneralConstants.CONFIG_PROVIDER;
 
 /**
  * Deals with Configuration
@@ -37,11 +47,11 @@ import java.io.InputStream;
  */
 public class ConfigurationUtil {
 
-    private static final PicketLinkLogger logger = PicketLinkLoggerFactory.getLogger();
+    private static final PicketLinkLogger LOGGER = PicketLinkLoggerFactory.getLogger();
 
     public static PicketLinkType getConfiguration(InputStream is) throws ParsingException {
         if (is == null)
-            throw logger.nullArgumentError("inputstream");
+            throw LOGGER.nullArgumentError("inputstream");
         PicketLinkConfigParser parser = new PicketLinkConfigParser();
         PicketLinkType picketLinkType = (PicketLinkType) parser.parse(is);
         return picketLinkType;
@@ -58,7 +68,7 @@ public class ConfigurationUtil {
      */
     public static IDPType getIDPConfiguration(InputStream is) throws ParsingException {
         if (is == null)
-            throw logger.nullArgumentError("inputstream");
+            throw LOGGER.nullArgumentError("inputstream");
 
         SAMLConfigParser parser = new SAMLConfigParser();
         return (IDPType) parser.parse(is);
@@ -75,7 +85,7 @@ public class ConfigurationUtil {
      */
     public static SPType getSPConfiguration(InputStream is) throws ParsingException {
         if (is == null)
-            throw logger.nullArgumentError("inputstream");
+            throw LOGGER.nullArgumentError("inputstream");
         return (SPType) (new SAMLConfigParser()).parse(is);
     }
 
@@ -90,7 +100,83 @@ public class ConfigurationUtil {
      */
     public static Handlers getHandlers(InputStream is) throws ParsingException {
         if (is == null)
-            throw logger.nullArgumentError("inputstream");
+            throw LOGGER.nullArgumentError("inputstream");
         return (Handlers) (new SAMLConfigParser()).parse(is);
+    }
+
+    public static PicketLinkType getConfiguration(ServletContext servletContext) throws ProcessingException, ConfigurationException {
+        SAMLConfigurationProvider configurationProvider = getConfigurationProvider(servletContext);
+
+        if (configurationProvider != null) {
+            LOGGER.debug("Loading PicketLink configuration configuration provider [" + configurationProvider + "].");
+            return configurationProvider.getPicketLinkConfiguration();
+        }
+
+        LOGGER.debug("Loading PicketLink configuration from [" + CONFIG_FILE_LOCATION + "].");
+
+        InputStream is = getConfigurationInputStream(servletContext);
+
+        if (is != null) {
+            try {
+                return getConfiguration(is);
+            } catch (ParsingException e) {
+                throw LOGGER.configurationError(e);
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static SAMLConfigurationProvider getConfigurationProvider(ServletContext servletContext) {
+        String configProviderType = servletContext.getInitParameter(CONFIG_PROVIDER);
+
+        if (configProviderType != null) {
+            try {
+                SAMLConfigurationProvider configurationProvider = (SAMLConfigurationProvider) SecurityActions
+                        .loadClass(Thread.currentThread().getContextClassLoader(), configProviderType).newInstance();
+
+                if (AbstractSAMLConfigurationProvider.class.isInstance(configurationProvider)) {
+                    InputStream inputStream = getConfigurationInputStream(servletContext);
+
+                    if (inputStream != null) {
+                        ((AbstractSAMLConfigurationProvider) configurationProvider).setConsolidatedConfigFile(inputStream);
+                    }
+                }
+
+                return configurationProvider;
+            } catch (Exception e) {
+                throw new RuntimeException("Could not create config provider [" + configProviderType + "].", e);
+            }
+        }
+
+        return null;
+    }
+
+    public static PicketLinkAuditHelper getAuditHelper(ServletContext servletContext) {
+        String auditHelperType = servletContext.getInitParameter(AUDIT_HELPER);
+
+        if (auditHelperType == null) {
+            auditHelperType = PicketLinkAuditHelper.class.getName();
+        }
+
+        LOGGER.debug("Creating audit helper [" + auditHelperType + "].");
+
+        try {
+            return (PicketLinkAuditHelper) SecurityActions
+                    .loadClass(Thread.currentThread().getContextClassLoader(), auditHelperType)
+                        .getConstructor(ServletContext.class)
+                            .newInstance(servletContext);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not create audit helper [" + auditHelperType + "].", e);
+        }
+    }
+
+    public static InputStream getConfigurationInputStream(ServletContext servletContext) {
+        return servletContext.getResourceAsStream(CONFIG_FILE_LOCATION);
     }
 }

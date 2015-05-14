@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.picketlink.common.exceptions.ParsingException;
 import org.picketlink.config.PicketLinkConfigParser;
 import org.picketlink.config.federation.IDPType;
+import org.picketlink.config.federation.IdentityURLProviderType;
 import org.picketlink.config.federation.PicketLinkType;
 import org.picketlink.config.federation.SPType;
 import org.picketlink.config.federation.STSType;
@@ -53,7 +54,7 @@ public class PicketLinkConsolidatedConfigParserUnitTestCase {
         assertNotNull(idp);
         assertTrue(picketlink.isEnableAudit());
 
-        // asserts the StrictPostBinding attribute. Default is true, but for this test it was changed to true in the configuration file. 
+        // asserts the StrictPostBinding attribute. Default is true, but for this test it was changed to true in the configuration file.
         assertFalse(idp.isStrictPostBinding());
 
         assertEquals("TestIdentityParticipantStack", idp.getIdentityParticipantStack());
@@ -69,6 +70,7 @@ public class PicketLinkConsolidatedConfigParserUnitTestCase {
         PicketLinkType picketlink = (PicketLinkType) result;
         SPType sp = (SPType) picketlink.getIdpOrSP();
         assertNotNull(sp);
+        assertEquals("http://localhost:8080/idp/", sp.getIdentityURL());
         assertEquals("REDIRECT", sp.getBindingType());
         assertEquals("tomcat", sp.getServerEnvironment());
         assertEquals("someURL", sp.getRelayState());
@@ -76,6 +78,29 @@ public class PicketLinkConsolidatedConfigParserUnitTestCase {
         assertEquals("/customLogoutPage.jsp", sp.getLogOutPage());
         assertTrue(sp.isSupportsSignature());
         assertTrue(picketlink.isEnableAudit());
+    }
+
+    @Test
+    public void testSPWithIdentityUrlProvider() throws ParsingException {
+        ClassLoader tcl = Thread.currentThread().getContextClassLoader();
+        InputStream configStream = tcl.getResourceAsStream("parser/config/picketlink-sp-identity-url-provider.xml");
+        PicketLinkConfigParser parser = new PicketLinkConfigParser();
+        Object result = parser.parse(configStream);
+        assertNotNull(result);
+        PicketLinkType picketlink = (PicketLinkType) result;
+        SPType sp = (SPType) picketlink.getIdpOrSP();
+        assertNotNull(sp);
+        assertEquals("http://default.idp.com", sp.getIdentityURL());
+
+        IdentityURLProviderType identityURLProvider = sp.getIdentityURLProvider();
+
+        assertNotNull(identityURLProvider);
+
+        assertEquals("http://default.idp.com", identityURLProvider.getDefaultUrl());
+        assertEquals("jboss", identityURLProvider.getDomain());
+        assertEquals("/accountChooser.html", identityURLProvider.getPage());
+        assertEquals("CustomProviderType", identityURLProvider.getType());
+        assertEquals(10, identityURLProvider.getExpiration());
     }
 
     @Test

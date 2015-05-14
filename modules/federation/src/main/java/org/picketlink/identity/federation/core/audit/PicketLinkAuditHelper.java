@@ -47,7 +47,7 @@ public class PicketLinkAuditHelper {
 
     private static final PicketLinkLogger logger = PicketLinkLoggerFactory.getLogger();
 
-    private AuditManager auditManager = null;
+    private AuditManager auditManager;
 
     /**
      * Create a {@link PicketLinkAuditHelper}
@@ -58,6 +58,10 @@ public class PicketLinkAuditHelper {
      */
     public PicketLinkAuditHelper(String securityDomainName) throws ConfigurationException {
         configureAuditManager(securityDomainName);
+    }
+
+    public PicketLinkAuditHelper(ServletContext servletContext) throws ConfigurationException {
+        configureAuditManager(getSecurityDomainName(servletContext));
     }
 
     protected void configureAuditManager(String securityDomainName) throws ConfigurationException {

@@ -76,6 +76,7 @@ public class SPType extends ProviderType {
      * The URL used to send a response for an IDP logout request
      */
     private String logoutResponseLocation;
+    private IdentityURLProviderType identityURLProvider;
 
     /**
      * Gets the value of the serviceURL property.
@@ -182,5 +183,22 @@ public class SPType extends ProviderType {
 
             setIdpMetadataFile(otherType.getIdpMetadataFile());
         }
+    }
+
+    @Override
+    public String getIdentityURL() {
+        if (this.identityURL == null && getIdentityURLProvider() != null) {
+            this.identityURL = this.identityURLProvider.getDefaultUrl();
+        }
+
+        return this.identityURL;
+    }
+
+    public void setIdentityURLProvider(IdentityURLProviderType identityURLProvider) {
+        this.identityURLProvider = identityURLProvider;
+    }
+
+    public IdentityURLProviderType getIdentityURLProvider() {
+        return identityURLProvider;
     }
 }

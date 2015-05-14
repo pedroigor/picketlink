@@ -1,0 +1,27 @@
+<PicketLink xmlns="urn:picketlink:identity-federation:config:2.1"
+            EnableAudit="true">
+  <PicketLinkSP xmlns="urn:picketlink:identity-federation:config:2.1"
+                ServerEnvironment="tomcat"
+                BindingType="REDIRECT"
+                RelayState="someURL"
+                ErrorPage="/someerror.jsp"
+                LogOutPage="/customLogoutPage.jsp"
+                IDPUsesPostBinding="true"
+                SupportsSignatures="true"
+          >
+    <IdentityURL>
+        <Provider DefaultURL="http://default.idp.com" Domain="jboss" Page="/accountChooser.html" Type="CustomProviderType" Expiration="10" />
+    </IdentityURL>
+    <ServiceURL>${employee.url::http://localhost:8080/employee/}</ServiceURL>
+  </PicketLinkSP>
+  <Handlers xmlns="urn:picketlink:identity-federation:handler:config:2.1">
+    <Handler
+            class="org.picketlink.identity.federation.web.handlers.saml2.SAML2IssuerTrustHandler"/>
+    <Handler
+            class="org.picketlink.identity.federation.web.handlers.saml2.SAML2LogOutHandler"/>
+    <Handler
+            class="org.picketlink.identity.federation.web.handlers.saml2.SAML2AuthenticationHandler"/>
+    <Handler
+            class="org.picketlink.identity.federation.web.handlers.saml2.RolesGenerationHandler"/>
+  </Handlers>
+</PicketLink>

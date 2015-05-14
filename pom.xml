@@ -51,6 +51,7 @@
     <version.checkstyle.plugin>2.12.1</version.checkstyle.plugin>
     <version.surefire.plugin>2.17</version.surefire.plugin>
     <version.deploy.plugin>2.8.1</version.deploy.plugin>
+    <version.source.plugin>2.2.1</version.source.plugin>
 
     <!-- Distribution Options -->
     <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
@@ -303,6 +304,10 @@
         <groupId>org.jboss.jandex</groupId>
         <artifactId>jandex-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
@@ -368,6 +373,19 @@
             </execution>
           </executions>
         </plugin>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-source-plugin</artifactId>
+              <version>${version.source.plugin}</version>
+              <executions>
+                  <execution>
+                      <id>attach-sources</id>
+                      <goals>
+                          <goal>jar</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${version.checkstyle.plugin}</version>

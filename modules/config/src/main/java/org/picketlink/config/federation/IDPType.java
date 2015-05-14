@@ -100,17 +100,27 @@ public class IDPType extends ProviderType {
     }
 
     /**
-     * Gets the value of the roleGenerator property.
+     * Gets the value of the roleGenerator property. If not set defaults to {@link org.picketlink.identity.federation.bindings.tomcat.TomcatRoleGenerator}.
      *
      * @return possible object is {@link String }
      */
     public String getRoleGenerator() {
-        if (roleGenerator == null) {
+        if (!hasRoleGenerator()) {
             return "org.picketlink.identity.federation.bindings.tomcat.TomcatRoleGenerator";
         } else {
             return roleGenerator;
         }
     }
+
+    /**
+     * <p>Returns true if the role generator was set.</p>
+     *
+     * @return
+     */
+    public boolean hasRoleGenerator() {
+        return this.roleGenerator != null;
+    }
+
 
     /**
      * Sets the value of the roleGenerator property.
@@ -122,16 +132,25 @@ public class IDPType extends ProviderType {
     }
 
     /**
-     * Gets the value of the attributeManager property.
+     * Gets the value of the attributeManager property. If not set, defaults to {@link org.picketlink.identity.federation.bindings.tomcat.TomcatAttributeManager}.
      *
      * @return possible object is {@link String }
      */
     public String getAttributeManager() {
-        if (attributeManager == null) {
+        if (!hasAttributeManager()) {
             return "org.picketlink.identity.federation.bindings.tomcat.TomcatAttributeManager";
         } else {
             return attributeManager;
         }
+    }
+
+    /**
+     * <p>Returns true if the attribute manager was set.</p>
+     *
+     * @return
+     */
+    public boolean hasAttributeManager() {
+        return this.attributeManager != null;
     }
 
     /**
@@ -192,14 +211,14 @@ public class IDPType extends ProviderType {
         super.importFrom(other);
 
         String attributeManager = other.getAttributeManager();
-        if (isNotNull(attributeManager)) {
+        if (isNotNull(attributeManager) && other.hasAttributeManager()) {
             setAttributeManager(attributeManager);
         }
 
         encrypt = other.isEncrypt();
 
-        if (isNotNull(other.getRoleGenerator())) {
-            this.roleGenerator = other.getRoleGenerator();
+        if (isNotNull(other.getRoleGenerator()) && other.hasRoleGenerator()) {
+            setRoleGenerator(other.getRoleGenerator());
         }
 
         String hostedURI = other.getHostedURI();
